@@ -1,0 +1,5 @@
+Twig Converter is licensed under the GNU General Public License, version 2 only (GPL-2.0-only).
+
+Copyright (c) 2017 kasimi, https://kasimi.net
+
+The full GPL-2.0 license text is available from the Free Software Foundation and in the original Twig Converter distribution.
