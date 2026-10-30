@@ -1,0 +1,29 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h1>{{ lang('ACP_TWIGCONVERTER_TITLE') }}</h1>
+
+<form id="acp_twigconverter" method="post" action="{{ U_ACTION }}">
+	<fieldset>
+		{% if ERROR %}<p class="error">{{ ERROR }}</p>{% endif %}
+		<dl>
+			<dt><label for="name">{{ lang('TWIGCONVERTER_SELECT') ~ lang('COLON') }}</label><br><span>{{ lang('TWIGCONVERTER_SELECT_EXPLAIN') }}</span></dt>
+			<dd><select name="name" id="name">
+				<option value="" selected disabled>{{ lang('TWIGCONVERTER_SELECT_EXT') }}</option>
+				{% for ext in loops.ext %}
+					<option value="{{ ext.NAME }}">{{ lang('TWIGCONVERTER_EXT', ext.NAME) }}</option>
+				{% endfor %}
+				{% for style in loops.style %}
+					<option value="{{ style.NAME }}">{{ lang('TWIGCONVERTER_STYLE', style.NAME) }}</option>
+				{% endfor %}
+			</select></dd>
+		</dl>
+
+		<p class="submit-buttons">
+			<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}" onclick="document.querySelector('.error').remove();">
+		</p>
+
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+</form>
+
+{% INCLUDE 'overall_footer.html' %}
