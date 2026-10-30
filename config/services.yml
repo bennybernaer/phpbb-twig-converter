@@ -1,0 +1,13 @@
+services:
+    kasimi.twigconverter.controller:
+        class: 'kasimi\twigconverter\controller\main'
+        arguments:
+            - '@request'
+            - '@symfony_request'
+            - '@template'
+            - '@template.twig.lexer'
+            - '@language'
+            - '@ext.manager'
+            - '@filesystem'
+            - '%core.root_path%'
+            - 'kasimi/twigconverter'
