@@ -1,0 +1,49 @@
+name: Check and sync release README
+
+on:
+  push:
+    paths:
+      - '.github/workflows/check-sync-readme.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare and sync README
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/r /tmp/u
+          tag="$(gh release view --json tagName -q .tagName 2>/dev/null || true)"
+          if [ -z "$tag" ]; then echo "RESULT=NO_RELEASE"; exit 0; fi
+          gh release download "$tag" --pattern '*.zip' --dir /tmp/r
+          z="$(find /tmp/r -maxdepth 1 -type f -name '*.zip' | head -n1)"
+          if [ -z "$z" ]; then echo "RESULT=NO_ZIP"; exit 0; fi
+          unzip -q "$z" -d /tmp/u
+          r="$(find /tmp/u -type f -iname README.md -printf '%d %p\n' | sort -n | head -n1 | cut -d' ' -f2-)"
+          if [ ! -f README.md ]; then echo "RESULT=REPO_README_MISSING"; exit 0; fi
+          if [ -z "$r" ]; then echo "RESULT=ZIP_README_MISSING"; exit 0; fi
+          tr -d '\r' < README.md > /tmp/a
+          tr -d '\r' < "$r" > /tmp/b
+          if cmp -s /tmp/a /tmp/b; then echo "RESULT=MATCH"; exit 0; fi
+          cp README.md "$r"
+          cd /tmp/u
+          zip -qr /tmp/new.zip .
+          asset="$(basename "$z")"
+          mv /tmp/new.zip "/tmp/$asset"
+          cd "$GITHUB_WORKSPACE"
+          gh release upload "$tag" "/tmp/$asset" --clobber
+          if [ -f "downloads/$asset" ]; then
+            cp "/tmp/$asset" "downloads/$asset"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add "downloads/$asset"
+            git commit -m "Sync release ZIP README" || true
+            git push
+          fi
+          echo "RESULT=SYNCED"
