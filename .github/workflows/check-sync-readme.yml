@@ -13,25 +13,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Compare and sync README
+      - name: Add README to release ZIP
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           mkdir -p /tmp/r /tmp/u
-          tag="$(gh release view --json tagName -q .tagName 2>/dev/null || true)"
-          if [ -z "$tag" ]; then echo "RESULT=NO_RELEASE"; exit 0; fi
+          tag="$(gh release view --json tagName -q .tagName)"
           gh release download "$tag" --pattern '*.zip' --dir /tmp/r
           z="$(find /tmp/r -maxdepth 1 -type f -name '*.zip' | head -n1)"
-          if [ -z "$z" ]; then echo "RESULT=NO_ZIP"; exit 0; fi
           unzip -q "$z" -d /tmp/u
-          r="$(find /tmp/u -type f -iname README.md -printf '%d %p\n' | sort -n | head -n1 | cut -d' ' -f2-)"
-          if [ ! -f README.md ]; then echo "RESULT=REPO_README_MISSING"; exit 0; fi
-          if [ -z "$r" ]; then echo "RESULT=ZIP_README_MISSING"; exit 0; fi
-          tr -d '\r' < README.md > /tmp/a
-          tr -d '\r' < "$r" > /tmp/b
-          if cmp -s /tmp/a /tmp/b; then echo "RESULT=MATCH"; exit 0; fi
-          cp README.md "$r"
+          composer="$(find /tmp/u -type f -name composer.json -printf '%d %p\n' | sort -n | head -n1 | cut -d' ' -f2-)"
+          if [ -n "$composer" ]; then
+            pkgdir="$(dirname "$composer")"
+          else
+            pkgdir="/tmp/u"
+          fi
+          cp README.md "$pkgdir/README.md"
           cd /tmp/u
           zip -qr /tmp/new.zip .
           asset="$(basename "$z")"
